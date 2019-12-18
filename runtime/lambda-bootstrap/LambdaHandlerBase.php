@@ -32,12 +32,12 @@ class LambdaHandlerBase
         $this->httpClient = new HttpClient();
     }
 
-    protected function getNextInvocationRequest()
+    protected function getNextInvocationRequest(): ?array
     {
         $response = $this->httpClient->get($this->runtimeApiUrl . '/invocation/next');
 
         return [
-            'invocation_id' => $response->getHeader('Lambda-Runtime-Aws-Request-Id')[0],
+            'invocation_id' => current($response->getHeader('Lambda-Runtime-Aws-Request-Id')),
             'payload' => json_decode((string)$response->getBody(), true)
         ];
     }
@@ -49,21 +49,25 @@ class LambdaHandlerBase
         ]);
     }
 
-    protected function handleInvocation(string $invocationId, array $payload): string
+    protected function executeAppHandler(string $invocationId, array $payload): string
     {
-        ($this->appHandlerFunction)($payload);
+        return ($this->appHandlerFunction)($payload);
+    }
+
+    public function handleInvocation(array $invocationRequest)
+    {
+        $invocationId = $invocationRequest['invocation_id'];
+        $invocationPayload = $invocationRequest['payload'];
+
+        $appHandlerResult = $this->executeAppHandler($invocationId, $invocationPayload);
+
+        $this->sendInvocationResponse($invocationId, $appHandlerResult);
     }
 
     public function handle()
     {
-        do {
-            $invocationRequest = $this->getNextInvocationRequest();
-            $invocationId = $invocationRequest['invocation_id'];
-            $invocationPayload = $invocationRequest['payload'];
-
-            $appHandlerResult = $this->handleInvocation($invocationId, $invocationPayload);
-
-            $this->sendInvocationResponse($invocationId, $appHandlerResult);
-        } while (true);
+        while (null !== $invocationRequest = $this->getNextInvocationRequest()) {
+            $this->handleInvocation($invocationRequest);
+        }
     }
 }

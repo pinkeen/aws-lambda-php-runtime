@@ -76,6 +76,7 @@ RUN cd "${LAMBDA_PHP_RUNTIME_DIR}/lambda-bootstrap" \
 
 # Just some better prompt to spice things up
 ENV PS1="\[\e[0;35m\][php-lambda]\[\e[0m \[\e[0;33m\]\u@\h\[\e[0m \[\e[0;34m\]\w\[\e[0m \[\e[1;32m\]→\[\e[0m\] "
+ENV LAMBDA_TASK_ROOT="/root/lambda-app"
 
 WORKDIR /root/lambda-app
 

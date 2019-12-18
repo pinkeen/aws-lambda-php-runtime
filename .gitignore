@@ -1,2 +1,5 @@
-!/app/*.php
+!/app-example/*.php
+/app-example/*
+!/app/.gitkeep
 /app/*
+/app-build/

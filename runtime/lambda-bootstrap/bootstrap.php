@@ -8,5 +8,10 @@ $appDir = getEnv('LAMBDA_TASK_ROOT');
 $appHandlerName = getenv('_HANDLER');
 $runtimeApiUrl = 'http://' . getenv('AWS_LAMBDA_RUNTIME_API') . '/2018-06-01/runtime';
 
-$handler = new Pinkeen\AWS\Lambda\LambdaHandlerDummy($appDir, $appHandlerName, $runtimeApiUrl);
+if (getenv('LAMBDA_PHP_DUMMY_BOOTSTRAP')) {
+    $handler = new Pinkeen\AWS\Lambda\LambdaHandlerDummy($appDir, $appHandlerName, $runtimeApiUrl);
+} else {
+    $handler = new Pinkeen\AWS\Lambda\LambdaHandlerBase($appDir, $appHandlerName, $runtimeApiUrl);
+}
+
 $handler->handle();
