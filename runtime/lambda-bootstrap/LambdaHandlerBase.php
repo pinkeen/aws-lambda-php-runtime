@@ -4,10 +4,10 @@ namespace Pinkeen\AWS\Lambda;
 
 use GuzzleHttp\Client as HttpClient;
 
-# Handle errors
-# https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html#runtimes-api-invokeerror
+# TODO: Handle errors (handler and runtime init!) and push them to the proper endpoints.
+# Vide: https://docs.aws.amazon.com/lambda/latest/dg/runtimes-api.html#runtimes-api-invokeerror
 
-class LambdaHandler
+class LambdaHandlerBase
 {
     private $runtimeApiUrl;
     private $appDir;
@@ -16,7 +16,7 @@ class LambdaHandler
     private $appHandlerFunction;
     private $httpClient;
 
-    private function __construct(string $appDir, string $appHandlerName, string $runtimeApiUrl)
+    public function __construct(string $appDir, string $appHandlerName, string $runtimeApiUrl)
     {
         $this->appDir = $appDir;
         $this->appHandlerName = $appHandlerName;
@@ -42,32 +42,28 @@ class LambdaHandler
         ];
     }
 
-    protected function sendInvocationResponse(string $invocationId, string $response)
+    protected function sendInvocationResponse(string $invocationId, string $invocationResponse)
     {
         $client->post($this->runtimeApiUrl . "/invocation/{$invocationId}/response", [
-            'body' => $response
+            'body' => $invocationResponse
         ]);
     }
 
-    protected function handle()
+    protected function handleInvocation(string $invocationId, array $payload): string
+    {
+        ($this->appHandlerFunction)($payload);
+    }
+
+    public function handle()
     {
         do {
-            // $invocationRequest = $this->getNextInvocationRequest();
-            // $invocationId = $invocationRequest['invocationId'];
-            // $invocationPayload = $invocationRequest['payload'];
-            $invocationId = 'eloziomalu';
-            $invocationPayload = ['this' => 'is just a test'];
+            $invocationRequest = $this->getNextInvocationRequest();
+            $invocationId = $invocationRequest['invocation_id'];
+            $invocationPayload = $invocationRequest['payload'];
 
             $appHandlerResult = $this->handleInvocation($invocationId, $invocationPayload);
 
-            var_dump($appHandlerResult);
-
-            // $this->sendInvocationResponse($invocationId, $appHandlerResult);
+            $this->sendInvocationResponse($invocationId, $appHandlerResult);
         } while (true);
-    }
-
-    protected function handleInvocation(array $invocationId, array $payload): string
-    {
-        ($this->appHandlerFunction)($payload);
     }
 }

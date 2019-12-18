@@ -1,0 +1,3 @@
+#!/bin/sh
+
+zip -qr9 "${LAMBDA_WORK_DIR}/${LAMBDA_PACKAGE_NAME}.zip" .

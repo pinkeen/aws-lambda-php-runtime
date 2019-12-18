@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -ex
 
 LAMBDA_PHP_APP_DIR="${LAMBDA_PHP_APP_DIR:-$(pwd)}"
 LAMBDA_PHP_RUNTIME_DIR="${LAMBDA_PHP_RUNTIME_DIR:-$(realpath "$(dirname "$0")/../")}"
