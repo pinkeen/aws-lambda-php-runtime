@@ -2,4 +2,4 @@
 /app-example/*
 !/app/.gitkeep
 /app/*
-/app-build/
+/build/

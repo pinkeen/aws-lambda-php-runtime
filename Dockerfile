@@ -1,29 +1,58 @@
-FROM amazonlinux:2 AS base
+# FROM amazonlinux:2 AS base
 
-# Install official amazon-linux 2 PHP binaries
-RUN amazon-linux-extras enable -y php7.3 \
-    && yum -y install \
-        php-cli \
-        php-opcache \
-        php-intl \
-        php-mbstring \
-        php-process \
-        php-xml
+# # Install official amazon-linux 2 PHP binaries
+# RUN amazon-linux-extras enable -y php7.3 \
+#     && yum -y install \
+#         php-cli \
+#         php-opcache \
+#         php-intl \
+#         php-mbstring \
+#         php-process \
+#         php-xml
 
+FROM alpine AS base
+
+RUN apk update \
+    && apk add \
+        php7 \
+        php7-common \
+        php7-opcache \
+        php7-wddx \
+        php7-bz2 \
+        php7-curl \
+        php7-xmlreader \
+        php7-json \
+        php7-mbstring \
+        php7-openssl \
+        php7-sodium \
+        php7-fileinfo \
+        php7-iconv \
+        php7-zip \
+        php7-sqlite3 \
+        php7-sockets \
+        php7-calendar \
+        php7-simplexml \
+        php7-xsl \
+        php7-pdo_sqlite \
+        php7-brotli \
+        php7-posix \
+        php7-tokenizer \
+        php7-intl \
+        php7-phar \
+        php7-exif \
+    && rm -rf /var/cache/apk/*
 
 FROM amazonlinux:2 AS builder
 
 # These are used only in docker during lambda build,
 # different paths will be computed live on AWS.
-ARG LAMBDA_PHP_APP_DIR="/root/lambda-app"
-ARG LAMBDA_PHP_RUNTIME_DIR="/opt/lambda-runtime"
-
-ENV LAMBDA_PHP_APP_DIR=${LAMBDA_PHP_APP_DIR} \
-    LAMBDA_PHP_RUNTIME_DIR=${LAMBDA_PHP_RUNTIME_DIR}
+ENV LAMBDA_PHP_APP_DIR="/root/lambda-app" \
+    LAMBDA_PHP_RUNTIME_DIR="/opt/lambda-runtime" \
+    LAMBDA_PHP_BUILD_DIR="/var/lambda-build"
 
 # Install:
-# - utility tools (nano, file)
-# - commands needed for scripts (which)
+# - utility tools (nano, file, which)
+# - commands needed for scripts (which, rsync, zip)
 # - composer requirements (git, unzip)
 RUN yum -y install \
         nano \
@@ -31,28 +60,15 @@ RUN yum -y install \
         file \
         git \
         unzip \
-        zip
+        zip \
+        rsync
 
-# Make sure subdirs exist
-RUN mkdir -p ${LAMBDA_PHP_RUNTIME_DIR}/{lib/php/modules,bin,etc/php.d}
+COPY --from=base /usr/lib/ ${LAMBDA_PHP_RUNTIME_DIR}/lib/
+COPY --from=base /lib/ ${LAMBDA_PHP_RUNTIME_DIR}/lib/
+COPY --from=base /usr/bin/php7 ${LAMBDA_PHP_RUNTIME_DIR}/bin/php-lambda-binary
 
-# Required by php-cli
-COPY --from=base /usr/lib64/libedit.so.* ${LAMBDA_PHP_RUNTIME_DIR}/lib/
-
-# Required by php-mbstring
-COPY --from=base /usr/lib64/libonig.so.* ${LAMBDA_PHP_RUNTIME_DIR}/lib/
-
-# Required by php-intl
-COPY --from=base /usr/lib64/libicu* ${LAMBDA_PHP_RUNTIME_DIR}/lib/
-
-# Required by php-xml
-COPY --from=base /usr/lib64/libexslt* usr/lib64/libxslt* ${LAMBDA_PHP_RUNTIME_DIR}/lib/
-
-# Extension binary modules
-COPY --from=base /usr/lib64/php/modules/* ${LAMBDA_PHP_RUNTIME_DIR}/lib/php/modules/
-
-# The CLI binary
-COPY --from=base /usr/bin/php ${LAMBDA_PHP_RUNTIME_DIR}/bin/php-lambda-binary
+RUN mv ${LAMBDA_PHP_RUNTIME_DIR}/lib/php7 ${LAMBDA_PHP_RUNTIME_DIR}/lib/php \
+    && cd ${LAMBDA_PHP_RUNTIME_DIR}/bin && ln -s ../lib/ld-musl-x86_64.so.1 ld
 
 # PHP configuration and lambda bootstrap
 COPY /runtime/ ${LAMBDA_PHP_RUNTIME_DIR}/

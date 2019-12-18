@@ -1,3 +1,23 @@
 #!/bin/sh
 
-zip -qr9 "${LAMBDA_WORK_DIR}/${LAMBDA_PACKAGE_NAME}.zip" .
+set -ex
+
+mkdir -p "${LAMBDA_PHP_BUILD_DIR}"
+find "${LAMBDA_PHP_BUILD_DIR}/." -name . -o -prune -exec rm -rvf -- {} +
+
+cd "${LAMBDA_PHP_BUILD_DIR}"
+rsync -av "${LAMBDA_PHP_APP_DIR}/" "${LAMBDA_PHP_BUILD_DIR}/"
+[ ! -f "composer.json" ] || composer install
+zip -qr9 "${LAMBDA_PHP_BUILD_DIR}/lambda-layer-app.zip" .
+
+rsync -av "${LAMBDA_PHP_RUNTIME_DIR}/" "${LAMBDA_PHP_BUILD_DIR}/"
+zip -qr9 --exclude='*.zip' "${LAMBDA_PHP_BUILD_DIR}/lambda-complete.zip" .
+
+cd "${LAMBDA_PHP_RUNTIME_DIR}"
+zip -qr9 "${LAMBDA_PHP_BUILD_DIR}/lambda-layer-runtime.zip" .
+
+du -sh "${LAMBDA_PHP_RUNTIME_DIR}"
+
+ls -alsh "${LAMBDA_PHP_BUILD_DIR}"/*.zip
+
+

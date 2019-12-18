@@ -44,7 +44,7 @@ class LambdaHandlerBase
 
     protected function sendInvocationResponse(string $invocationId, string $invocationResponse)
     {
-        $client->post($this->runtimeApiUrl . "/invocation/{$invocationId}/response", [
+        $this->httpClient->post($this->runtimeApiUrl . "/invocation/{$invocationId}/response", [
             'body' => $invocationResponse
         ]);
     }
