@@ -1,0 +1,7 @@
+#!/bin/sh
+
+php \
+    -d opcache.validate_timestamps=0 \
+    -d opcache.file_cache_only=1 \
+    -d opcache.file_cache_consistency_checks=0 \
+    -d opcache.enable_cli=1
