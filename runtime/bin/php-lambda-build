@@ -3,21 +3,26 @@
 set -ex
 
 mkdir -p "${LAMBDA_PHP_BUILD_DIR}"
-find "${LAMBDA_PHP_BUILD_DIR}/." -name . -o -prune -exec rm -rvf -- {} +
+rm -rf "${LAMBDA_PHP_BUILD_DIR}/*"
+find "${LAMBDA_PHP_BUILD_DIR}/." -name . -o -prune -exec rm -rf -- {} +
+
+# TODO: Add dirs one-by-one instead of compressing same stuff again and again?
 
 cd "${LAMBDA_PHP_BUILD_DIR}"
-rsync -av "${LAMBDA_PHP_APP_DIR}/" "${LAMBDA_PHP_BUILD_DIR}/"
+rsync -a "${LAMBDA_PHP_APP_DIR}/" "${LAMBDA_PHP_BUILD_DIR}/"
 [ ! -f "composer.json" ] || composer install
-zip -qr9 "${LAMBDA_PHP_BUILD_DIR}/lambda-layer-app.zip" .
 
-rsync -av "${LAMBDA_PHP_RUNTIME_DIR}/" "${LAMBDA_PHP_BUILD_DIR}/"
-zip -qr9 --exclude='*.zip' "${LAMBDA_PHP_BUILD_DIR}/lambda-complete.zip" .
+zip -qr9 "${LAMBDA_PHP_BUILD_DIR}/lambda-layer-app.zip" .
+zip -qr9 "${LAMBDA_PHP_BUILD_DIR}/lambda-layer-app-vendor.zip" . --include 'vendor/*'
+zip -qr9 "${LAMBDA_PHP_BUILD_DIR}/lambda-layer-app-src.zip" . --exclude '*.zip' --exclude 'vendor/*'
+
+rsync -a "${LAMBDA_PHP_RUNTIME_DIR}/" "${LAMBDA_PHP_BUILD_DIR}/"
+zip -qr9 "${LAMBDA_PHP_BUILD_DIR}/lambda-complete.zip" . --exclude='*.zip'
 
 cd "${LAMBDA_PHP_RUNTIME_DIR}"
 zip -qr9 "${LAMBDA_PHP_BUILD_DIR}/lambda-layer-runtime.zip" .
 
 du -sh "${LAMBDA_PHP_RUNTIME_DIR}"
-
 ls -alsh "${LAMBDA_PHP_BUILD_DIR}"/*.zip
 
 

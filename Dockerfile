@@ -63,9 +63,12 @@ RUN yum -y install \
         zip \
         rsync
 
+RUN mkdir -p "${LAMBDA_PHP_RUNTIME_DIR}"/etc/ssl
+
 COPY --from=base /usr/lib/ ${LAMBDA_PHP_RUNTIME_DIR}/lib/
 COPY --from=base /lib/ ${LAMBDA_PHP_RUNTIME_DIR}/lib/
 COPY --from=base /usr/bin/php7 ${LAMBDA_PHP_RUNTIME_DIR}/bin/php-lambda-binary
+COPY --from=base /etc/ssl/cert.pem ${LAMBDA_PHP_RUNTIME_DIR}/etc/ssl/cert.pem
 
 RUN mv ${LAMBDA_PHP_RUNTIME_DIR}/lib/php7 ${LAMBDA_PHP_RUNTIME_DIR}/lib/php \
     && cd ${LAMBDA_PHP_RUNTIME_DIR}/bin && ln -s ../lib/ld-musl-x86_64.so.1 ld

@@ -51,6 +51,10 @@ class LambdaHandlerBase
 
     protected function executeAppHandler(string $invocationId, array $payload): string
     {
+        # TODO: Pass aws information to handler, like:
+        # - AWS_REGION
+        # - AWS_ACCESS_KEY
+        # - ...
         return ($this->appHandlerFunction)($payload);
     }
 
